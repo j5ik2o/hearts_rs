@@ -1,4 +1,4 @@
-use rand::Rng;
+// use rand::Rng;
 use rand::seq::SliceRandom;
 
 // Total number of games
@@ -16,12 +16,14 @@ const NUM_PLAYERS: i32 = 4;
 
 fn main() {
 
+    // 4人のプレイヤー（RandomAgent）をインスタンス化し、オブジェクトをVecに格納する
     let players = Vec::new();
     for _ in 0..NUM_PLAYERS {
         let hands: Vec<i32> = (0..NUM_KC).collect();
         players.push(RandomAgent{hands: hands});
     }
-    
+
+    // NUM_GAMES だけゲームをプレイする
     for i in 1..=NUM_GAMES {
         play_one_game(i, &players);
     }
@@ -30,7 +32,8 @@ fn main() {
 
 
 fn play_one_game(game_number: i32, players: &Vec<RandomAgent>) {
-    
+
+    // 各プレイヤーにカードを配る
     distribute_cards(players)
     
 }
