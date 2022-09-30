@@ -38,13 +38,16 @@ fn main() {
                 break;
             }
         }
-        let mut winner = idx / NUM_KC;
+        let mut winner = (idx as i32) / (NUM_KC as i32);
         
         for i in 0..NUM_PLAYERS {
             println!("{:?}", players[i].hands);
         }
         
         for trick in 0..NUM_KC {
+
+            let agent_order = determine_agent_order(winner);
+            println!("{:?}", agent_order);
             
             for turn in 0..NUM_PLAYERS {
 
@@ -76,6 +79,23 @@ fn deal_cards(players: &mut Vec<RandomAgent>) -> Vec<i32> {
     }
 
     return v;
+    
+}
+
+
+fn determine_agent_order(winner: i32) -> [i32; NUM_PLAYERS] {
+
+    let mut order: [i32; NUM_PLAYERS] = [-1; NUM_PLAYERS];
+
+    for i in 0..NUM_PLAYERS {
+        if winner + (i as i32) < (NUM_PLAYERS as i32) {
+            order[i] = winner + (i as i32);
+        } else {
+            order[i] = winner + (i as i32) - (NUM_PLAYERS as i32);
+        }
+    }
+
+    return order;
     
 }
 
