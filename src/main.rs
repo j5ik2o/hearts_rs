@@ -30,7 +30,7 @@ fn main() {
         players.push(RandomAgent{hand: hand});
     }
 
-    // Having agents play the card game "Hearts" NUM_GAMES times.
+    // Letting agents play the card game "Hearts" NUM_GAMES times.
     for _ in 1..=NUM_GAMES {
 
         // Dealing cards to each agent.
@@ -40,21 +40,22 @@ fn main() {
         // (the agent who has C-2 is the leading player in the initial trick).
         let mut idx = 0;
         for (i, val) in dealt_cards.iter().enumerate() {
-            if *val == 0 {
+            if *val == C_2 {
                 idx = i;
                 break;
             }
         }
         let mut winner = (idx as i32) / (NUM_KC as i32);
-        
-        for i in 0..NUM_PLAYERS {
-            println!("{:?}", players[i].hand);
-        }
 
-        let mut hb_flag = false;
-        
+        // initializing the flag of "breaking heart"".
+        let mut bh_flag = false;
+
         for trick in 0..NUM_KC {
 
+            for i in 0..NUM_PLAYERS {
+                println!("{:?}", players[i].hand);
+            }
+            
             let agent_order = determine_agent_order(winner);
             println!("{:?}", agent_order);
 
@@ -63,21 +64,30 @@ fn main() {
             for turn in 0..NUM_PLAYERS {
                 
                 let playing_agent = agent_order[turn] as usize;
-                
+
+                // Letting the agent choose a card.
                 let mut card;
                 loop {
                     card = players[playing_agent].select_card();
-                    if is_valid_card(&players[playing_agent].hand, &card_sequence, card, trick as i32, hb_flag) {
+                    if is_valid_card(&players[playing_agent].hand, &card_sequence, card, trick, bh_flag) {
                         break;
                     }
                 }
-                if get_suit(card) == HEART {
-                    hb_flag = true;
+                players[playing_agent].update_hand(card);
+
+                // When a heart is played for the first time in a game, setting the flag to true.
+                if !bh_flag && get_suit(card) == HEART {
+                    bh_flag = true;
                 }
+                
                 card_sequence[turn] = card;
+                print!("{}, ", card);
                 
             }
+
+            winner = determine_winner(&agent_order, &card_sequence);
             println!("");
+            println!("winner = {}", winner);
             
         }
         
@@ -127,7 +137,7 @@ fn get_suit(card: i32) -> i32 {
 }
 
 
-fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card: i32, trick: i32, hb_flag: bool) -> bool {
+fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card: i32, trick: usize, bh_flag: bool) -> bool {
     
     let leading_card = card_sequence[0];
     
@@ -144,7 +154,7 @@ fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card:
         }
         
         // Until breaking heart occurs, the leading player may not play a heart.
-        if !hb_flag && get_suit(card) == HEART {
+        if !bh_flag && get_suit(card) == HEART {
             return false;
         }
         
@@ -170,6 +180,23 @@ fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card:
         return false;
         
     }
+    
+}
+
+
+fn determine_winner(agent_order: &[i32; NUM_PLAYERS], card_sequence: &[i32; NUM_PLAYERS]) -> i32 {
+    
+    let mut leading_card = card_sequence[0];
+    let lc_suit = get_suit(leading_card);
+    let mut winner = agent_order[0];
+
+    for (card, agent) in card_sequence.iter().zip(agent_order.iter()) {
+        if lc_suit == get_suit(*card) && leading_card < *card {
+            leading_card = *card;
+            winner = *agent;
+        }
+    }
+    return winner;
     
 }
 
@@ -203,9 +230,16 @@ impl RandomAgent {
         loop {
             let card_index = rng.gen_range(0..NUM_KC);
             if self.hand[card_index] != -1 {
-                let card = self.hand[card_index];
-                self.hand[card_index] = -1;
-                return card;
+                return self.hand[card_index];
+            }
+        }
+    }
+
+    fn update_hand(&mut self, card: i32) {
+        for i in 0..NUM_KC {
+            if self.hand[i] == card {
+                self.hand[i] = -1;
+                break;
             }
         }
     }
