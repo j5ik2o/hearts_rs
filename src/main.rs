@@ -52,13 +52,8 @@ fn main() {
 
         for trick in 0..NUM_KC {
 
-            for i in 0..NUM_PLAYERS {
-                println!("{:?}", players[i].hand);
-            }
-            
             let agent_order = determine_agent_order(winner);
-            println!("{:?}", agent_order);
-
+            
             let mut card_sequence: [i32; NUM_PLAYERS] = [-1; NUM_PLAYERS];
             
             for turn in 0..NUM_PLAYERS {
@@ -75,24 +70,18 @@ fn main() {
                 }
                 players[playing_agent].update_hand(card);
 
+                card_sequence[turn] = card;
+                
                 // When a heart is played for the first time in a game, setting the flag to true.
                 if !bh_flag && get_suit(card) == HEART {
                     bh_flag = true;
                 }
                 
-                card_sequence[turn] = card;
-                print!("{}, ", card);
-                
             }
 
+            // The winner of the current trick becomes the leading player of the next trick.
             winner = determine_winner(&agent_order, &card_sequence);
-            println!("");
-            println!("winner = {}", winner);
             
-        }
-        
-        for i in 0..NUM_PLAYERS {
-            println!("{:?}", players[i].hand);
         }
         
     }
@@ -103,11 +92,27 @@ fn main() {
 fn deal_cards(players: &mut Vec<RandomAgent>) -> Vec<i32> {
 
     let mut v: Vec<i32> = (0..NUM_CARDS as i32).collect();
-    let mut rng = rand::thread_rng();
-    v.shuffle(&mut rng);
+    loop {
+        let mut rng = rand::thread_rng();
+        v.shuffle(&mut rng);
+
+        // Prohibiting hearts from appearing 13 times in a row.
+        let mut count = 0;
+        for i in 0..NUM_CARDS {
+            if get_suit(v[i]) == HEART {
+                count += 1;
+            } else {
+                count = 0;
+            }
+        }
+        if count < NUM_KC {
+            break;
+        }
+    }
     
     for i in 0..NUM_PLAYERS {
-        players[i].set_hand(&v[(i * NUM_KC)..((i+1) * NUM_KC)]);
+        let cards = &v[(i * NUM_KC)..((i+1) * NUM_KC)];
+        players[i].set_hand(&cards);
     }
 
     return v;
@@ -153,16 +158,16 @@ fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card:
             return false;
         }
         
+        // If the leading player has only hearts, it is an exceptional case and the agent may lead with a heart.
+        if get_suit(card) == HEART && !is_suit_in_hand(hand, CLUB) && !is_suit_in_hand(hand, DIA) && !is_suit_in_hand(hand, SPADE) {
+            return true;
+        }
+
         // Until breaking heart occurs, the leading player may not play a heart.
         if !bh_flag && get_suit(card) == HEART {
             return false;
         }
         
-        // If the leading player has only hearts, it is an exceptional case and the agent may lead with a heart.
-        if get_suit(card) == HEART && (is_suit_in_hand(hand, CLUB) || is_suit_in_hand(hand, DIA) || is_suit_in_hand(hand, SPADE)) {
-            return false;
-        }
-
         return true;
         
     } else {
@@ -185,11 +190,14 @@ fn is_valid_card(hand: &[i32; NUM_KC], card_sequence: &[i32; NUM_PLAYERS], card:
 
 
 fn determine_winner(agent_order: &[i32; NUM_PLAYERS], card_sequence: &[i32; NUM_PLAYERS]) -> i32 {
-    
+
     let mut leading_card = card_sequence[0];
     let lc_suit = get_suit(leading_card);
     let mut winner = agent_order[0];
 
+    // After a trick, the agent who has played the strongest card of the same suit as the leading card
+    // is the winner of that trick.
+    
     for (card, agent) in card_sequence.iter().zip(agent_order.iter()) {
         if lc_suit == get_suit(*card) && leading_card < *card {
             leading_card = *card;
