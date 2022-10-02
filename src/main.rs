@@ -2,7 +2,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 
 // Total number of games
-const NUM_GAMES: usize = 1;
+const NUM_GAMES: usize = 10000;
 
 // Number of cards in each suit: 2-10, J, Q, K and A
 const NUM_KC: usize = 13;
@@ -31,6 +31,9 @@ fn main() {
         players.push(RandomAgent{hand: hand});
     }
 
+    let mut total_penalty_points: [f32; NUM_PLAYERS] = [0.0; NUM_PLAYERS];
+    let mut averaged_penalty_points: [f32; NUM_PLAYERS] = [0.0; NUM_PLAYERS];
+
     // Letting agents play the card game "Hearts" NUM_GAMES times.
     for _ in 1..=NUM_GAMES {
 
@@ -40,13 +43,17 @@ fn main() {
         play_one_game(&mut players, &mut whole_card_sequence, &mut whole_agent_sequence);
 
         let penalty_points = calc_penalty_points(&whole_card_sequence, &whole_agent_sequence);
-
-        println!("{:?}", whole_card_sequence);
-        println!("{:?}", whole_agent_sequence);
-
-        println!("{:?}", penalty_points);
+        
+        for i in 0..NUM_PLAYERS {
+            total_penalty_points[i] += penalty_points[i] as f32;
+        }
         
     }
+    
+    for i in 0..NUM_PLAYERS {
+        averaged_penalty_points[i] = total_penalty_points[i] / (NUM_GAMES as f32);
+    }
+    println!("{:?}", averaged_penalty_points);
     
 }
 
