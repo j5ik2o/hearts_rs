@@ -2,7 +2,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 
 // Total number of games
-const NUM_GAMES: usize = 10000;
+const NUM_GAMES: usize = 1;
 
 // Number of cards in each suit: 2-10, J, Q, K and A
 const NUM_KC: usize = 13;
@@ -292,12 +292,19 @@ fn calc_penalty_points(card_sequence: &[i32; NUM_CARDS], agent_sequence: &[i32; 
 }
 
 
+trait Agent {
+    fn set_hand(&mut self, cards: &[i32]);
+    fn select_card(&mut self) -> i32;
+    fn update_hand(&mut self, card: i32);
+}
+
+
 struct RandomAgent {
     hand: [i32; NUM_KC],
 }
 
 
-impl RandomAgent {
+impl Agent for RandomAgent {
 
     fn set_hand(&mut self, cards: &[i32]) {
         self.hand = cards.try_into().unwrap();
