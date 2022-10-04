@@ -27,18 +27,18 @@ fn main() {
     // Assigning agents:
     // 1 -> Random agent; it plays cards from its hand at random.
     // 2 -> Rule-based agent; it plays cards based on the pre-determined rules.
-    let agents: [i32; NUM_PLAYERS] = [2, 1, 1, 1];
+    let idx: [i32; NUM_PLAYERS] = [1, 2, 2, 2];
     
     // Making instances of 4 agents and store the objects in Vec.
-    let mut players = Vec::new();
+    let mut agents: Vec<Agent> = Vec::new();
     for i in 0..NUM_PLAYERS {
         let hand: [i32; NUM_KC] = [-1; NUM_KC];
-        match agents[i] {
-            1 => players.push(RandomAgent{hand: hand}),
-            2 => players.push(RuleBasedAgent{hand: hand}),
+        match idx[i] {
+            1 => agents.push(RandomAgent{hand: hand}),
+            2 => agents.push(RuleBasedAgent{hand: hand}),
         }
     }
-
+    
     let mut total_penalty_points: [f32; NUM_PLAYERS] = [0.0; NUM_PLAYERS];
     let mut averaged_penalty_points: [f32; NUM_PLAYERS] = [0.0; NUM_PLAYERS];
 
@@ -48,7 +48,7 @@ fn main() {
         let mut whole_card_sequence: [i32; NUM_CARDS] = [-1; NUM_CARDS];
         let mut whole_agent_sequence: [i32; NUM_CARDS] = [-1; NUM_CARDS];
     
-        play_one_game(&mut players, &mut whole_card_sequence, &mut whole_agent_sequence);
+        play_one_game(&mut agents, &mut whole_card_sequence, &mut whole_agent_sequence);
 
         let penalty_points = calc_penalty_points(&whole_card_sequence, &whole_agent_sequence);
         
@@ -66,11 +66,10 @@ fn main() {
 }
 
 
-fn play_one_game<T: Agent>(players: &mut Vec<T>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
-// fn play_one_game(players: &mut Vec<RandomAgent>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
+fn play_one_game<T: Agent>(agents: &mut Vec<T>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
 
     // Cards are dealt to the four agents so that each has NUM_KC cards at the beginning of a game.
-    let dealt_cards = deal_cards(players);
+    let dealt_cards = deal_cards(agents);
     
     // Getting the playing sequence in the first trick based on agents' hands.
     // (the agent who has C-2 is the leading player in the initial trick).
@@ -101,12 +100,12 @@ fn play_one_game<T: Agent>(players: &mut Vec<T>, whole_card_sequence: &mut [i32;
             // Letting the agent choose a card.
             let mut card;
             loop {
-                card = players[playing_agent].select_card();
-                if is_valid_card(&players[playing_agent].hand, &card_sequence, card, trick, bh_flag) {
+                card = agents[playing_agent].select_card();
+                if is_valid_card(&agents[playing_agent].hand, &card_sequence, card, trick, bh_flag) {
                     break;
                 }
             }
-            players[playing_agent].update_hand(card);
+            agents[playing_agent].update_hand(card);
             
             card_sequence[turn] = card;
 
@@ -131,8 +130,7 @@ fn play_one_game<T: Agent>(players: &mut Vec<T>, whole_card_sequence: &mut [i32;
 }
 
 
-fn deal_cards<T: Agent>(players: &mut Vec<T>) -> Vec<i32> {
-// fn deal_cards(players: &mut Vec<RandomAgent>) -> Vec<i32> {
+fn deal_cards<T: Agent>(agents: &mut Vec<T>) -> Vec<i32> {
 
     let mut v: Vec<i32> = (0..NUM_CARDS as i32).collect();
     loop {
@@ -155,7 +153,7 @@ fn deal_cards<T: Agent>(players: &mut Vec<T>) -> Vec<i32> {
     
     for i in 0..NUM_PLAYERS {
         let cards = &v[(i * NUM_KC)..((i+1) * NUM_KC)];
-        players[i].set_hand(&cards);
+        agents[i].set_hand(&cards);
     }
 
     return v;
