@@ -24,11 +24,19 @@ const S_Q: i32 = SPADE * (NUM_KC as i32) + 10;
 
 fn main() {
 
+    // Assigning agents:
+    // 1 -> Random agent; it plays cards from its hand at random.
+    // 2 -> Rule-based agent; it plays cards based on the pre-determined rules.
+    let agents: [i32; NUM_PLAYERS] = [2, 1, 1, 1];
+    
     // Making instances of 4 agents and store the objects in Vec.
     let mut players = Vec::new();
-    for _ in 0..NUM_PLAYERS {
+    for i in 0..NUM_PLAYERS {
         let hand: [i32; NUM_KC] = [-1; NUM_KC];
-        players.push(RandomAgent{hand: hand});
+        match agents[i] {
+            1 => players.push(RandomAgent{hand: hand}),
+            2 => players.push(RuleBasedAgent{hand: hand}),
+        }
     }
 
     let mut total_penalty_points: [f32; NUM_PLAYERS] = [0.0; NUM_PLAYERS];
@@ -58,7 +66,8 @@ fn main() {
 }
 
 
-fn play_one_game(players: &mut Vec<RandomAgent>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
+fn play_one_game<T: Agent>(players: &mut Vec<T>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
+// fn play_one_game(players: &mut Vec<RandomAgent>, whole_card_sequence: &mut [i32; NUM_CARDS], whole_agent_sequence: &mut [i32; NUM_CARDS]) {
 
     // Cards are dealt to the four agents so that each has NUM_KC cards at the beginning of a game.
     let dealt_cards = deal_cards(players);
@@ -122,7 +131,8 @@ fn play_one_game(players: &mut Vec<RandomAgent>, whole_card_sequence: &mut [i32;
 }
 
 
-fn deal_cards(players: &mut Vec<RandomAgent>) -> Vec<i32> {
+fn deal_cards<T: Agent>(players: &mut Vec<T>) -> Vec<i32> {
+// fn deal_cards(players: &mut Vec<RandomAgent>) -> Vec<i32> {
 
     let mut v: Vec<i32> = (0..NUM_CARDS as i32).collect();
     loop {
@@ -330,4 +340,31 @@ impl Agent for RandomAgent {
         }
     }
     
+}
+
+
+struct RuleBasedAgent {
+    hand: [i32; NUM_KC],
+}
+
+
+impl Agent for RuleBasedAgent {
+    
+    fn set_hand(&mut self, cards: &[i32]) {
+        self.hand = cards.try_into().unwrap();
+    }
+    
+    fn select_card(&mut self) -> i32 {
+        return 0;
+    }
+    
+    fn update_hand(&mut self, card: i32) {
+        for i in 0..NUM_KC {
+            if self.hand[i] == card {
+                self.hand[i] = -1;
+                break;
+            }
+        }
+    }
+
 }
