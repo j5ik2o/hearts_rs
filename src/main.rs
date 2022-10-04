@@ -353,7 +353,7 @@ impl Agent for RuleBasedAgent {
     }
     
     fn select_card(&mut self) -> i32 {
-        return 0;
+        return 0;  // Not yet implemented.
     }
     
     fn update_hand(&mut self, card: i32) {
