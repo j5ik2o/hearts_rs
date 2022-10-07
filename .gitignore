@@ -1,1 +1,7 @@
 /target
+.idea/
+*.iml
+
+Cargo.lock
+.DS_Store
+
